@@ -61,9 +61,24 @@ int* merge(int* arr, int l, int m, int r)
             std::cout<<"+++"<<arr[i]<<"\t";
         std::cout<<std::endl;
     }
+    i=l;j=m;
+    /*
+    for(int x =0;x<(r-l)+1;x++)
+    {
+        if(arr[i]<= arr[j])
+        {
+            temp[x] = arr[i++];
+        }
+        else if (arr[i]> arr[j])
+        {
+            temp[x] = arr[j++];
+        }
+    }
+    */
+
     while(i<m  && j<r)
     {
-        if(arr[i]< arr[j])
+        if(arr[i]<= arr[j])
         {
             temp[k] = arr[i];
             ++i;
@@ -86,10 +101,10 @@ int* merge(int* arr, int l, int m, int r)
         temp[k] = arr[j];
         ++j; ++k;
     }
-    memcpy(arr+l, temp, (r-l)*sizeof(int));
 #pragma omp critical
     {
-        for (int i=0 ;i<(r-l);i++)
+    memcpy(arr+l, temp, (r-l)*sizeof(int));
+        for (int i=l ;i<r;i++)
             std::cout<<"_____"<<arr[i]<<"\t";
         std::cout<<std::endl;
     }
@@ -97,25 +112,10 @@ int* merge(int* arr, int l, int m, int r)
 
 void mergesort(int *arr, int l, int r)
 {
-    /*
-#pragma omp critical 
-    {
-        std::cout<<std::endl;
-        for(int i=l;i<r;i++)
-        {
-            std::cout<<">>>>>"<<arr[i]<<"\t"; 
-        }
-        std::cout<<std::endl;
-    }
-    */
-    
     if(l < r)
     {
-        int mid = floor((l + r)/2);
-//        int mid = (l +(r-1)/2);
-//        std::cout<<"P1 -> low : "<<l<<"\t mid "<<mid<<std::endl;
+        int mid =( l +r )/2;
         mergesort(arr, l, mid);
-//        std::cout<<"P1 -> mid+1 : "<<mid +1<<"\t End "<<r<<std::endl;
         mergesort(arr, mid+1, r);
         merge(arr, l, mid,r);
     }
