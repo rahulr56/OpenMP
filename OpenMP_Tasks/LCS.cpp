@@ -11,6 +11,9 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <algorithm>
+#include <ctime>
+#include <chrono>
+#include <ratio>
 
 /*
 #define max(a,b) a>b?a:b
@@ -18,18 +21,23 @@
 */
 int LCSLength_parallel (char *X, int m, char* Y, int n, int numThreads)
 {
-    int C[m+1][n+1];
+//    int C[m+1][n+1];
+    int **C;
+    C = new int*[m+1];
 #pragma omp parallel for
     for(int i=0;i<=m;++i)
     {
+        C[i] = new int[n+1];
+        C[i][0] = 0;
+    }
 #pragma omp parallel for
-        for(int j=0;j<=n;++j)
-            C[i][j] = 0;
+    for(int j=0;j<=n;++j)
+    {
+        C[0][j] = 0;
     }
 
-    int a;
 
-#pragma omp parallel shared(X, Y, C, m, n) private(b,col,a)
+#pragma omp parallel
     {
         for(int a = 2; a <= m+n; a++)
         {
@@ -196,7 +204,7 @@ char* genString(int size)
 
     for (int i=0; i < size; i++)
     {
-        string[i] = static_cast<char>(seed+ (rand()%26+1));
+        string[i] = static_cast<char>(seed+ (rand()%26));
     }
 
     return string;
@@ -229,11 +237,16 @@ int main(int argc, char* argv[])
 
     char* str1 = genString(n);
     char* str2 = genString(m);
-
+    // std::cout<<"Str 1:"<<str1<<"\t str2 :"<<str2<<std::endl;
     int numThreads = atoi(argv[3]); 
     if (m< numThreads)
         numThreads = m;
     omp_set_num_threads(numThreads);
 
-    std::cout<<LCSLength_parallel(str1, m ,str2,n, numThreads)<<std::endl;
+    std::chrono::high_resolution_clock::time_point  start  = std::chrono::high_resolution_clock::now();
+    LCSLength_parallel(str1, m ,str2,n, numThreads);
+    std::chrono::high_resolution_clock::time_point end  = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cerr.precision(10);
+    std::cerr<<std::fixed<<elapsed_seconds.count()<<std::endl;
 }

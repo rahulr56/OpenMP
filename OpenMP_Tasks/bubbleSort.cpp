@@ -1,16 +1,18 @@
 #include <omp.h>
 #include <stdio.h>
-#include <iostream>
-#include <string>
-#include <ctime>
-#include <ratio>
-#include <chrono>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <math.h>
-#include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+#include <ratio> 
+#include <ctime> 
+#include <chrono>
+#include <iostream>
+#include <algorithm>
 
 
 #ifdef __cplusplus
@@ -24,69 +26,65 @@ extern "C" {
 }
 #endif
 
+void bubbleSort(int *arr, int n, int numThreads)
+{
+#pragma omp parallel 
+    {
+        //std::cout<<"thread : "<<omp_get_thread_num()<<std::endl;
+#pragma omp for
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<n-1;++j)
+            {
 
-void Bubble_sort_OMP(
-      int*  a  /* in/out */,
-      int  n    /* in     */,
-      int  num_threads) {
-   int list_length, block_count, i, temp;
-   int block_size, lower, upper, block;
-
-   block_count = num_threads;
-   omp_lock_t m[block_count];
-   block_size = n/block_count;
-
-   for(i=0;i<block_count;i++) omp_init_lock(&m[i]);
-
-   omp_set_num_threads(num_threads);
-   
-   #pragma omp parallel private(list_length, block, lower, upper, i, temp)
-   {
-       for(list_length=block_size;list_length>=1;list_length--){
-           for(block=0;block<block_count;block++){
-               lower=block_size*block;
-               if(block==block_count-1) upper = n;
-               else upper = block_size*(block+1);
-               if(block==0) omp_set_lock(&m[0]);
-
-               for(i=lower;i<upper-1;i++){
-                   if(a[i]>a[i+1]){
-                       temp=a[i];
-                       a[i]=a[i+1];
-                       a[i+1]=temp;
-                   }
-               }
-               if(block==block_count-1){
-                   omp_unset_lock(&m[block]);
-                   break;
-               }
-
-               omp_set_lock(&m[block+1]);
-               if(a[i]>a[i+1]){
-                   temp=a[i];
-                   a[i]=a[i+1];
-                   a[i+1]=temp;
-               }
-               omp_unset_lock(&m[block]);
-           }
+                if(arr[j]>arr[j+1])
+                {
+                    int temp = arr[j];
+                    arr[j] = arr[j+1];
+                    arr[j+1] = temp;
+                }
+            }
         }
     }
 }
 
-int main (int argc, char* argv[]) 
+
+void bubbleSortOddEven(int*arr, int n)
 {
-    if (argc < 3) 
+    bool sorted = true;
+    for(int i=0; i < n; ++i)
     {
-        std::cerr<<"Usage: "<<argv[0]<<" <n> <nbthreads>"<<std::endl;
-        return -1;
+        int k = (i%2==0)?0:1; 
+#pragma omp parallel for shared(k)
+        for(int j=k; j<n-1; j+=2 )
+        {
+           if (arr[j] > arr[j+1]) 
+           {
+               int temp = arr[j];
+               arr[j] = arr[j+1];
+               arr[j+1] = temp;
+               sorted = false;
+           }
+        }
+           if(sorted)
+               break;
     }
+}
 
-    int n = atoi(argv[1]);
-    int numThreads = atoi(argv[2]); 
-    if (n< numThreads)
-        numThreads = n;
-    omp_set_num_threads(numThreads);
+void genArray(int *arr, int n)
+{
+    for (int i=0;i<n;i++)
+        arr[i] = rand()%100;
+}
 
+int main(int argc, char* argv[])
+{
+    if(argc<3)
+    {
+        std::cout<<"Usage : "<<argv[0]<<"<size of array> <numThreads>"<<std::endl;
+        exit(-1);
+    }
+    
     //forces openmp to create the threads beforehand
 #pragma omp parallel
     {
@@ -99,17 +97,52 @@ int main (int argc, char* argv[])
         }
     }
 
-    int * arr = new int [n];
 
-    generateMergeSortData (arr, atoi(argv[1]));
+    int n = atoi(argv[1]);
+    int numThreads = atoi(argv[2]);
 
-    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-    Bubble_sort_OMP(arr, atoi(argv[1]), atoi(argv[2])); 
-    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed = end-start;
-    std::cerr.precision(10);
-    std::cerr <<std::fixed<< elapsed.count() << std::endl;
+    int *arr = new int[n]; 
+    // genArray(arr, n);
+    generateMergeSortData (arr, n);
+
+    omp_set_num_threads(numThreads); 
+/* 
+    // Basic form of bubble Sort  
+    std::chrono::time_point<std::chrono::system_clock> start1 = std::chrono::system_clock::now(); 
+    bubbleSort(arr,n, numThreads );
+    std::chrono::time_point<std::chrono::system_clock> end1 = std::chrono::system_clock::now(); 
+    std::chrono::duration<double> elapsed_seconds = end1 - start1;
+    std::cerr<<std::fixed;
+    std::cerr << elapsed_seconds.count() << std::endl;
+
+    // Sequential bubble sort
+    std::chrono::time_point<std::chrono::system_clock> start_seq = std::chrono::system_clock::now(); 
+    omp_set_num_threads(1);
+    bubbleSort(arr,n, 1 );
+    std::chrono::time_point<std::chrono::system_clock> end_seq = std::chrono::system_clock::now(); 
+    std::chrono::duration<double> elapsed_seconds_seq = end_seq - start_seq;
+
+    std::cerr <<numThreads<<"\t"<<std::fixed<<elapsed_seconds_seq.count() <<"\t";
+*/ 
+
+//    std::cout<<"bubbleSortOddEven sort : \n";
+    omp_set_num_threads(numThreads);
+    // start timer 
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now(); 
+    
+    // sort the array elements 
+    bubbleSortOddEven(arr, n);
+
+    // stop time 
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now(); 
+
+    // Evaluate time taken
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cerr<<std::fixed<<numThreads<<" "<< n<<" "<<elapsed_seconds.count() << std::endl;
 
     checkMergeSortResult (arr, atoi(argv[1]));
 
+    delete[] arr;
+
+    return 0;
 }

@@ -22,14 +22,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-/*
-#pragma omp critical 
-{
-for(int i=start;i<end;i++)
-std::cout<<"__________"<<arr[i]<<"\t";
-std::cout<<std::endl;
-}
-*/
 
 int calculateSum(int* arr, int start, int end)
 {
@@ -73,11 +65,7 @@ int main (int argc, char* argv[])
     int * arr = new int [n];
 
     generateReduceData (arr, n);
-/*
-    for(int i=0;i<n;i++)
-        std::cout<<arr[i]<<"\t";
-    std::cout<<std::endl;
-*/ 
+
     std::chrono::high_resolution_clock::time_point start;
 
     int sum = 0;

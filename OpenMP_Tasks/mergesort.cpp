@@ -1,6 +1,9 @@
 #include <omp.h>
 #include <stdio.h>
 #include <iostream>
+#include <ctime>
+#include <chrono>
+#include <ratio>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -29,84 +32,63 @@ int binarySearch(int *arr, int l, int r, int x)
     {
         int mid = l + (r - l)/2;
 
-        // If the element is present at the middle itself
-        /*
-           if (arr[mid] == x)  
-           return mid;
-           */
-        // If element is smaller than mid, then it can only be present
-        // in left subarray
         if (arr[mid] > x) 
         {
             return mid;
         }
-        //return binarySearch(arr, l, mid-1, x);
-
-        // Else the element can only be present in right subarray
         return binarySearch(arr, mid+1, r, x);
     }
-
-    // We reach here when element is not present in array
-    return -1;
 }
 
-int* merge(int* arr, int l, int m, int r) 
+void merge (int* arr, int l, int m, int r)
 {
-    int i=l;
-    int j = m, k=0;
-    int *temp = new int[r-l];
-#pragma omp critical
+    int i, j, k;
+    int n1 = m - l + 1;
+    int n2 =  r - m;
+ 
+    /* create temp arrays */
+    int *L = new int[n1];
+    int *R = new int[n2];
+ 
+    /* Copy data to temp arrays L[] and R[] */
+    for (i = 0; i < n1; i++)
+        L[i] = arr[l + i];
+    for (j = 0; j < n2; j++)
+        R[j] = arr[m + 1+ j];
+ 
+    /* Merge the temp arrays back into arr[l..r]*/
+    i = 0; // Initial index of first subarray
+    j = 0; // Initial index of second subarray
+    k = l; // Initial index of merged subarray
+    while (i < n1 && j < n2)
     {
-        for (int i=l ;i<r;i++)
-            std::cout<<"+++"<<arr[i]<<"\t";
-        std::cout<<std::endl;
-    }
-    i=l;j=m;
-    /*
-    for(int x =0;x<(r-l)+1;x++)
-    {
-        if(arr[i]<= arr[j])
+        if (L[i] <= R[j])
         {
-            temp[x] = arr[i++];
-        }
-        else if (arr[i]> arr[j])
-        {
-            temp[x] = arr[j++];
-        }
-    }
-    */
-
-    while(i<m  && j<r)
-    {
-        if(arr[i]<= arr[j])
-        {
-            temp[k] = arr[i];
+            arr[k] = L[i];
             ++i;
         }
-        else 
+        else
         {
-            temp[k] = arr[j];
+            arr[k] = R[j];
             ++j;
         }
         ++k;
     }
+ 
+    while (i < n1)
+    {
+        arr[k] = L[i];
+        ++i;
+        ++k;
+    }
 
-    while(i<m)
+    /* Copy the remaining elements of R[], if there
+       are any */
+    while (j < n2)
     {
-        temp[k] = arr[i];
-        ++i; ++k;
-    }
-    while(j<r)
-    {
-        temp[k] = arr[j];
-        ++j; ++k;
-    }
-#pragma omp critical
-    {
-    memcpy(arr+l, temp, (r-l)*sizeof(int));
-        for (int i=l ;i<r;i++)
-            std::cout<<"_____"<<arr[i]<<"\t";
-        std::cout<<std::endl;
+        arr[k] = R[j];
+        ++j;
+        ++k;
     }
 }
 
@@ -114,7 +96,7 @@ void mergesort(int *arr, int l, int r)
 {
     if(l < r)
     {
-        int mid =( l +r )/2;
+        int mid = l +(r-l )/2;
         mergesort(arr, l, mid);
         mergesort(arr, mid+1, r);
         merge(arr, l, mid,r);
@@ -122,29 +104,8 @@ void mergesort(int *arr, int l, int r)
 }
 
 
-void mergesortTask(int* arr, int size, int *result)
+int main (int argc, char* argv[]) 
 {
-    int *temp = new int[size];
-    memcpy(temp, arr, size*sizeof(int));
-/*
-#pragma omp critical 
-    {
-        std::cout<<"Size : " <<size<<std::endl; 
-        for(int i=0;i<size;i++)
-        {
-            temp[i] = arr[i];
-            std::cout<<temp[i]<<" :  "<<arr[i]<<std::endl;
-        }
-    }
-    
-    std::cout<<std::endl;
-    
-    */
-    mergesort(temp, 0, size);
-    result = temp;
-}
-
-int main (int argc, char* argv[]) {
 
     //forces openmp to create the threads beforehand
 #pragma omp parallel
@@ -161,39 +122,47 @@ int main (int argc, char* argv[]) {
         std::cerr<<"Usage: "<<argv[0]<<" <n> <nbthreads>"<<std::endl;
         return -1;
     }
-    omp_set_num_threads(atoi(argv[2]));
 
     int n = atoi(argv[1]);
     int nbthreads = atoi(argv[2]);
-    int granularity = (int)ceil((float)n/(float)nbthreads);
+    int granularity = 2;
     int * arr = new int [atoi(argv[1])];
-
-    std::cout<<"Granularity " <<granularity<<std::endl;
+    omp_set_num_threads(nbthreads);
 
     generateMergeSortData (arr, atoi(argv[1]));
 
-    std::cout<<"Input array :\n";
-    for (int i=0;i<n;i++)
-        std::cout<<arr[i]<<"\t";
-
-    std::cout<<std::endl;
-
-    int count = 0; 
+    int count = 1; 
     int (*tempArr)[nbthreads];
-#pragma omp parallel 
+    int treeHeight = log(n)/log(2) +1;
+
+    std::chrono::high_resolution_clock::time_point start  = std::chrono::high_resolution_clock::now();
+    while (treeHeight)
     {
-#pragma omp single firstprivate(granularity)
-        for (int i=0; i<nbthreads;i++)
+#pragma omp parallel 
         {
-            int aStart = i*granularity;
-            if(i == nbthreads - 1 )
-                granularity = n - count;
+#pragma omp single firstprivate(granularity)
+            for (int i=0; i<n ;i+=granularity)
+            {
+                int aStart = i; // *granularity;
+                int aEnd = i + granularity;
+                if(aEnd >= n)
+                {
+                    aEnd = n-1;
+                }
 #pragma omp task
-            mergesortTask(&arr[aStart], granularity, tempArr[i]);
-            count +=granularity;
-        }
+                mergesort(arr, aStart, aEnd);
+            }
 #pragma omp taskwait
+        }
+        --treeHeight;
+        granularity = pow(2,++count);
+#pragma omp barrier
     }
+    std::chrono::high_resolution_clock::time_point end  = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cerr.precision(10);
+    std::cerr<<std::fixed<<elapsed_seconds.count()<<std::endl;
 
     checkMergeSortResult (arr, atoi(argv[1]));
 
