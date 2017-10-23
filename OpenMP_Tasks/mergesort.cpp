@@ -96,46 +96,18 @@ void mergesort(int *arr, int l, int r)
 {
     if(l < r)
     {
-        int mid = l +(r-l )/2;
+        int mid = l +(r-l)/2;
         mergesort(arr, l, mid);
         mergesort(arr, mid+1, r);
         merge(arr, l, mid,r);
     }
 }
 
-
-int main (int argc, char* argv[]) 
+void parallelMergeSort(int *arr, int n)
 {
-
-    //forces openmp to create the threads beforehand
-#pragma omp parallel
-    {
-        int fd = open (argv[0], O_RDONLY);
-        if (fd != -1) {
-            close (fd);
-        }
-        else {
-            std::cerr<<"something is amiss"<<std::endl;
-        }
-    }
-    if (argc < 3) {
-        std::cerr<<"Usage: "<<argv[0]<<" <n> <nbthreads>"<<std::endl;
-        return -1;
-    }
-
-    int n = atoi(argv[1]);
-    int nbthreads = atoi(argv[2]);
-    int granularity = 2;
-    int * arr = new int [atoi(argv[1])];
-    omp_set_num_threads(nbthreads);
-
-    generateMergeSortData (arr, atoi(argv[1]));
-
     int count = 1; 
-    int (*tempArr)[nbthreads];
+    int granularity = 2;
     int treeHeight = log(n)/log(2) +1;
-
-    std::chrono::high_resolution_clock::time_point start  = std::chrono::high_resolution_clock::now();
     while (treeHeight)
     {
 #pragma omp parallel 
@@ -158,10 +130,44 @@ int main (int argc, char* argv[])
         granularity = pow(2,++count);
 #pragma omp barrier
     }
-    std::chrono::high_resolution_clock::time_point end  = std::chrono::high_resolution_clock::now();
 
+}
+
+
+int main (int argc, char* argv[]) 
+{
+
+    //forces openmp to create the threads beforehand
+#pragma omp parallel
+    {
+        int fd = open (argv[0], O_RDONLY);
+        if (fd != -1) {
+            close (fd);
+        }
+        else {
+            std::cerr<<"something is amiss"<<std::endl;
+        }
+    }
+    if (argc < 3) 
+    {
+        std::cerr<<"Usage: "<<argv[0]<<" <n> <nbthreads>"<<std::endl;
+        return -1;
+    }
+
+    int n = atoi(argv[1]);
+    int nbthreads = atoi(argv[2]);
+    int * arr = new int [atoi(argv[1])];
+    omp_set_num_threads(nbthreads);
+
+    generateMergeSortData (arr, atoi(argv[1]));
+
+
+    std::chrono::high_resolution_clock::time_point start  = std::chrono::high_resolution_clock::now();
+
+    parallelMergeSort(arr, n);
+    
+    std::chrono::high_resolution_clock::time_point end  = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cerr.precision(10);
     std::cerr<<std::fixed<<elapsed_seconds.count()<<std::endl;
 
     checkMergeSortResult (arr, atoi(argv[1]));
