@@ -94,7 +94,7 @@ matmulHorizontalPartitioning(A, vectorX, N, p, P)
 {
     if(p == 0)
     {
-        create an array  os size (N X 1)
+        create an array  of size (N X 1)
     }
     begin = p*(N/P)
     end = (p + 1) * (N/P)
