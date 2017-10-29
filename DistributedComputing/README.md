@@ -134,33 +134,6 @@ Each node computes the value of a 1d array of size `N/P`. Suppose that `X` is th
 ```
 matmulVerticalPartitioning(arr, rows, cols, p, P):
 {
-    create and initialize an array val of size N to 0
-    begin = p*(N/P)
-    end = (p + 1) * (N/P)
-    if(p != 0)
-    {
-        recv computedVal from p-1
-    }
-    else
-    {
-        create an array computedVal and initialize to 0s.
-    }
-    for (i = 0; i < N; ++i)
-    {
-        for(j = begin; j < end; ++j)
-        {
-            val[i] += (arr[i][j] * vectorX[j] + computedVal[j])
-        }
-    }
-    if(p != P-1)
-    {
-        send val to p+1
-    }
-}
-```
-```
-matmulVerticalPartitioning(arr, rows, cols, p, P):
-{
     begin = p * (N/P)
     end = (p + 1) * (N/P)
     if(p != 0)
@@ -170,7 +143,6 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
     else
     {
         create and initialize an array computedVal of size N to 0
-        //create an array computedVal and initialize to 0s.
     }
     for (i = 0; i < N; ++i)
     {
@@ -191,7 +163,7 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
 ```
 
 *__Memory Consumed:__*
-Each node creates an array of size `N` to store the computed results and sends this array to the adjacent node. Hence, the total memory reuired in all the nodes is `N*P`.  
+Node 0 creates an array of size `N` to store the computed results and sends this array to the adjacent node. The next node computes values and stores them in the same array. Hence, the total memory consumption is `θ(N)`
 
 *__Communication per iteration:__*
 As this algorithm is CHAIN structured, there are no  or `θ(1)` communictions happening in every iteration.
