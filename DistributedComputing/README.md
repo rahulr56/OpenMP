@@ -66,18 +66,22 @@ matmulHorizontalPartitioning(A, vectorX, N, p, P)
     }
     begin = p*(N/P)
     end = (p + 1) * (N/P)
-    val = 0
+    Create and initialize an array val[begin - end] to 0s.
     for (i = begin; i < end; ++i)
     {
         for (j = 0; j < N; ++j )
         {
-            val += (A[i][j] * vectorX[j])
+            val[i] += (A[i][j] * vectorX[j])
         }
     }
     if (p == 0)
     {
-        recv computedVal from node k
-        y[k] = computedVal
+        copy val array computed in p0 to Y.
+        for (i=1; i < P; ++i)
+        {
+            recv computedVal from node k
+            copy computedVal array to Y.
+        }
     }
     else
     {
@@ -87,10 +91,12 @@ matmulHorizontalPartitioning(A, vectorX, N, p, P)
 ```
 Memory Consumed:
 
-Every node other than Node 0 takes the memory size of 1 extra variable. So, their memory consumption is `θ(1)`. Whereas Node 0 creates and array Y of size N, Hence, its memory consumption is `θ(N)`. 
+Every node other than Node 0 takes the memory size of `N/P` array size. So, their memory consumption is `θ(N/P)`. Whereas Node 0 creates and array Y of size N, Hence, its memory consumption is `θ(N)`. 
 
 Communication per iteration:
+Each node computes the value of a 1d array of size `N/P`. Suppose that X is the communication overhead required to send an array of size `N/P`, the total communication overhead for this algorithm is 
 ```
+θ( P * Communication(X) )
 ```
 ### Algorithm for Vertical data partion
 ```
