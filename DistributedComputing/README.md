@@ -58,10 +58,37 @@ Since the communication is very costly in a disrtibuted computing environment, I
 ## Dense Matrix Multiplication
 ### Algorithm for Horizontal data partion
 ```
+matmulHorizontalPartitioning(A, vectorX, N, p, P)
+{
+    if(p == 0)
+    {
+        create an array  os size (N X 1)
+    }
+    begin = p*(N/P)
+    end = (p + 1) * (N/P)
+    val = 0
+    for (i = begin; i < end; ++i)
+    {
+        for (j = 0; j < N; ++j )
+        {
+            val += (A[i][j] * vectorX[j])
+        }
+    }
+    if (p == 0)
+    {
+        recv computedVal from node k
+        y[k] = computedVal
+    }
+    else
+    {
+        send val to 0
+    }
+}
 ```
 Memory Consumed:
-```
-```
+
+Every node other than Node 0 takes the memory size of 1 extra variable. So, their memory consumption is `θ(1)`. Whereas Node 0 creates and array Y of size N, Hence, its memory consumption is `θ(N)`. 
+
 Communication per iteration:
 ```
 ```
