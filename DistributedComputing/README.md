@@ -134,30 +134,42 @@ Each node computes the value of a 1d array of size `N/P`. Suppose that `X` is th
 ```
 matmulVerticalPartitioning(arr, rows, cols, p, P):
 {
-    begin = p * (N/P)
-    end = (p + 1) * (N/P)
-    if(p != 0)
+
+    for ( k = 0; k < 10; ++k)
     {
-        recv computedVal from p-1
-    }
-    else
-    {
-        create and initialize an array computedVal of size N to 0
-    }
-    for (i = 0; i < N; ++i)
-    {
-        for(j = begin; j < end; ++j)
+        begin = p * (N/P)
+        end = (p + 1) * (N/P)
+        if(p != 0)
         {
-            computedVal[i] += (arr[i][j] * vectorX[j])
+            recv computedVal from p-1
         }
-    }
-    if(p != P-1)
-    {
-        send computedVal to p+1
-    }
-    else 
-    {
-        print array computedVal
+        else if (p == 0  && k == 0)
+        {
+            create and initialize an array computedVal of size N to 0
+        }
+        else if(p == 0)
+        {
+            recv computedVal from P-1
+        }
+        for (i = 0; i < N; ++i)
+        {
+            for(j = begin; j < end; ++j)
+            {
+                computedVal[i] += (arr[i][j] * vectorX[j])
+            }
+        }
+        if(p != P-1)
+        {
+            send computedVal to p+1
+        }
+        else if(p == P-1  && k == 9)
+        {
+            print computedVal array
+        }
+        else if(p == P-1)
+        {
+            send computedVal to 0
+        }
     }
 }
 ```
@@ -166,10 +178,10 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
 Node 0 creates an array of size `N` to store the computed results and sends this array to the adjacent node. The next node computes values and stores them in the same array. Hence, the total memory consumption is `θ(N)`
 
 *__Communication per iteration:__*
-As this algorithm is CHAIN structured, there are no  or `θ(1)` communictions happening in every iteration.
+As this algorithm is CHAIN structured, there are no  or `θ(Communication(1) * P)` communictions happening in every iteration.
 
 *__Total Communications__*
-The total communication oevrhead is `θ(P * Communication(N/P))`
+The total communication oevrhead is `10 * θ(Communication(1) * P)`
 
 ### Algorithm for Block data partion
 ```
