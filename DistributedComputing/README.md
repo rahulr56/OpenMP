@@ -36,19 +36,51 @@ calculateHeatUsingBlock(heatArr, N , p, P)
 ```
 *__Communication per iteration is__*
 ```
-θ( P * Communication(1) )
+θ(1) or 0
+```
+*__Total Communication:__*
+```
+θ( P * Communication(1) ) 
 ```
 
 ### Algorithm for Round Robin data partition
 ```
-calculateHeatUsingRoundRobin(arr, N, p, P)
+calculateHeatUsingRoundRobin(heatArr, N, p, P)
 {
+    create an array X of size P 
+    for (i = 0 ; i < P ; ++i)
+    {
+        X[i] = (N/P) * i + p
+    }
 
+    for (i = 0; i < P; ++i)
+    {
+        if(X[i] == 0)
+        {
+            heatArr[0] = (2 * heatArr[0] + heatArr[1])/3
+            send heatArr[0] to p1 
+        }
+        else if (X[i] == N-1)
+        {
+            recv heatArr[N-1] from P-1
+            heatArr[N-1] = (2 * heatArr[N-1] + heatArr[N-2])/3
+        }
+        else
+        {
+            recv heatArr[X[i]-1] from P-1
+            heatArr[X[i]] = (heatArr[X[i]-1] + heatArr[X[i]] + heatArr[X[i+1]])/3
+            send heatArr[X[i]] to p+1
+        }
+    }
 }
+```
+*__Total Communication:__*
+```
+θ( N * Communication(1) ) 
 ```
 *__Communication per iteration is:__*
 ```
-θ( N * Communication(1) ) 
+θ( P * Communication(1) ) 
 ```
 
 ### Best Algorithm
