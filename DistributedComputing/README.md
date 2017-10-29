@@ -158,6 +158,37 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
     }
 }
 ```
+```
+matmulVerticalPartitioning(arr, rows, cols, p, P):
+{
+    begin = p * (N/P)
+    end = (p + 1) * (N/P)
+    if(p != 0)
+    {
+        recv computedVal from p-1
+    }
+    else
+    {
+        create and initialize an array computedVal of size N to 0
+        //create an array computedVal and initialize to 0s.
+    }
+    for (i = 0; i < N; ++i)
+    {
+        for(j = begin; j < end; ++j)
+        {
+            computedVal[i] += (arr[i][j] * vectorX[j])
+        }
+    }
+    if(p != P-1)
+    {
+        send computedVal to p+1
+    }
+    else 
+    {
+        print array computedVal
+    }
+}
+```
 
 *__Memory Consumed:__*
 Each node creates an array of size `N` to store the computed results and sends this array to the adjacent node. Hence, the total memory reuired in all the nodes is `N*P`.  
@@ -199,8 +230,8 @@ matmulBlockPartitioning(A, vectorX, N, p, P)
 ```
 
 *__Memory Consumed:__*
-```
-```
+Each node creates a local arry of size `N/P` to compute the value.
+
 *__Communication per iteration:__*
 ```
 ```
