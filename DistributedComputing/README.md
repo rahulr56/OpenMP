@@ -1,3 +1,7 @@
+# Distributed Parallel Computing 
+
+## Reduction
+
 ## Heat Equation
 Algorithm for Block data partition
 ```
@@ -29,4 +33,11 @@ calculateHeatUsingBlock(heatArr, N , p, P)
         send heatArr[end-1] to p+1 
     }
 }
-````
+```
+Algorithm for Round Robin data partition
+```
+calculateHeatUsingRoundRobin(arr, N, p, P)
+{
+
+}
+```
