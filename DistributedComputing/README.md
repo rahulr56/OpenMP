@@ -34,7 +34,7 @@ calculateHeatUsingBlock(heatArr, N , p, P)
     }
 }
 ```
-Communication per iteration is 
+*__Communication per iteration is__*
 ```
 θ( P * Communication(1) )
 ```
@@ -46,7 +46,7 @@ calculateHeatUsingRoundRobin(arr, N, p, P)
 
 }
 ```
-Communication per iteration is:
+*__Communication per iteration is:__*
 ```
 θ( N * Communication(1) ) 
 ```
@@ -89,12 +89,12 @@ matmulHorizontalPartitioning(A, vectorX, N, p, P)
     }
 }
 ```
-Memory Consumed:
+*__Memory Consumed:__*
 
 Every node other than Node 0 takes the memory size of `N/P` array size. So, their memory consumption is `θ(N/P)`. Whereas Node 0 creates and array Y of size N, Hence, its memory consumption is `θ(N)`. 
 
-Communication per iteration:
-Each node computes the value of a 1d array of size `N/P`. Suppose that X is the communication overhead required to send an array of size `N/P`, the total communication overhead for this algorithm is 
+*__Communication per iteration:__*
+Each node computes the value of a 1d array of size `N/P`. Suppose that `X` is the communication overhead required to send an array of size `N/P`, the total communication overhead for this algorithm is 
 ```
 θ( P * Communication(X) )
 ```
@@ -102,19 +102,19 @@ Each node computes the value of a 1d array of size `N/P`. Suppose that X is the 
 ```
 ```
 
-Memory Consumed:
+*__Memory Consumed:__*
 ```
 ```
-Communication per iteration:
+*__Communication per iteration:__*
 ```
 ```
 ### Algorithm for Block data partion
 ```
 ```
 
-Memory Consumed:
+*__Memory Consumed:__*
 ```
 ```
-Communication per iteration:
+*__Communication per iteration:__*
 ```
 ```
