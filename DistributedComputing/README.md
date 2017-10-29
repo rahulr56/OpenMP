@@ -3,7 +3,7 @@
 ## Reduction
 
 ## Heat Equation
-Algorithm for Block data partition
+#### Algorithm for Block data partition
 ```
 calculateHeatUsingBlock(heatArr, N , p, P)
 {
@@ -34,10 +34,19 @@ calculateHeatUsingBlock(heatArr, N , p, P)
     }
 }
 ```
-Algorithm for Round Robin data partition
+Communication per iteration is 
+```
+θ( P * Communication(1) )
+```
+
+#### Algorithm for Round Robin data partition
 ```
 calculateHeatUsingRoundRobin(arr, N, p, P)
 {
 
 }
+```
+Communication per iteration is:
+```
+θ( N * Communication(1) ) 
 ```
