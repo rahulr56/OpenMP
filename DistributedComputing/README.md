@@ -52,8 +52,9 @@ Communication per iteration is:
 ```
 
 ### Best Algorithm
+```
 Since the communication is very costly in a disrtibuted computing environment, I would choose block data partitioning over Round Robin data partition. Suppose that the cost of communication is less than that of the wait time, I would prefer Round Robin data partitioning over block data partition.
-
+```
 
 ## Dense Matrix Multiplication
 ### Algorithm for Horizontal data partion
