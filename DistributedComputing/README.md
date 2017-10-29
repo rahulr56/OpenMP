@@ -130,16 +130,37 @@ Each node computes the value of a 1d array of size `N/P`. Suppose that `X` is th
 ```
 θ( P * Communication(X) )
 ```
-### Algorithm for Vertical data partion
+### Algorithm for Vertical data partion (Chain)
 ```
+matmulVerticalPartitioning(arr, rows, cols, p, P):
+{
+    create and initialize an array val of size N to 0
+    begin = p*(N/P)
+    end = (p + 1) * (N/P)
+    recv computedVal from p-1
+    for (i = 0; i < N; ++i)
+    {
+        for(j = begin; j < end; ++j)
+        {
+            val[j] += (arr[i][j] * vectorX[j] + computedVal[j])
+        }
+    }
+    if(p!=P-1)
+    {
+        send val to p+1
+    }
+}
 ```
 
 *__Memory Consumed:__*
-```
-```
+Each node creates an array of size `N` to store the computed results and sends this array to the adjacent node. Hence, the total memory reuired in all the nodes is `N*P`.  
+
 *__Communication per iteration:__*
-```
-```
+As this algorithm is CHAIN structured, there are no  or `θ(1)` communictions happening in every iteration.
+
+*__Total Communications__*
+The total communication oevrhead is `θ(P * Communication(N/P))`
+
 ### Algorithm for Block data partion
 ```
 ```
