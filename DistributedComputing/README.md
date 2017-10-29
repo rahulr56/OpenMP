@@ -137,15 +137,22 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
     create and initialize an array val of size N to 0
     begin = p*(N/P)
     end = (p + 1) * (N/P)
-    recv computedVal from p-1
+    if(p != 0)
+    {
+        recv computedVal from p-1
+    }
+    else
+    {
+        create an array computedVal and initialize to 0s.
+    }
     for (i = 0; i < N; ++i)
     {
         for(j = begin; j < end; ++j)
         {
-            val[j] += (arr[i][j] * vectorX[j] + computedVal[j])
+            val[i] += (arr[i][j] * vectorX[j] + computedVal[j])
         }
     }
-    if(p!=P-1)
+    if(p != P-1)
     {
         send val to p+1
     }
@@ -163,6 +170,32 @@ The total communication oevrhead is `θ(P * Communication(N/P))`
 
 ### Algorithm for Block data partion
 ```
+matmulBlockPartitioning(A, vectorX, N, p, P)
+{
+    createan array val of size (N/P) and initialize to 0
+    begin = p * (N/P)
+    end = (p + 1) * (N/P)
+    if(p != 0)
+    {
+        recv computedVal from p-1
+    }
+    else
+    {
+        create an array computedVal and initialize to 0s.
+    }
+    for (i = begin; i < end; ++i)
+    {
+        for (j = begin; j < end; ++j)
+        {
+            val[i] += (A[i][j] * vectorX[j])
+        }
+        val[i] += computedVal[i]
+    }
+    if( p != P-1)
+    {
+        send val to p+1
+    }
+}
 ```
 
 *__Memory Consumed:__*
