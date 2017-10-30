@@ -208,8 +208,12 @@ matmulBlockPartitioning(A, vectorX, N, p, P)
             {
                 recv computedVal from P-1
                 vectorX = computedVal
+                reinitialize computedVal to 0s
             }
-            create and initialize an array computedVal of size N to 0            
+            else
+            {
+                create and initialize an array computedVal of size N to 0            
+            }
         }
         for (i = begin; i < end; ++i)
         {
