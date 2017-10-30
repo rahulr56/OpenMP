@@ -194,35 +194,49 @@ As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` comm
 ```
 matmulBlockPartitioning(A, vectorX, N, p, P)
 {
-    createan array val of size (N/P) and initialize to 0
-    begin = p * (N/P)
-    end = (p + 1) * (N/P)
-    if(p != 0)
+    for ( k = 0; k < 10; ++k)
     {
-        recv computedVal from p-1
-    }
-    else
-    {
-        create an array computedVal and initialize to 0s.
-    }
-    for (i = begin; i < end; ++i)
-    {
-        for (j = begin; j < end; ++j)
+        begin = p * (N/P)
+        end = (p + 1) * (N/P)
+        if(p != 0)
         {
-            val[i] += (A[i][j] * vectorX[j])
+            recv computedVal from p-1
         }
-        val[i] += computedVal[i]
-    }
-    if( p != P-1)
-    {
-        send val to p+1
+        else if (p == 0  && k == 0)
+        {
+            if(k != 0)
+            {
+                recv computedVal from P-1
+                vectorX = computedVal
+            }
+            create and initialize an array computedVal of size N to 0            
+        }
+        for (i = begin; i < end; ++i)
+        {
+            for(j = begin; j < end; ++j)
+            {
+                computedVal[i] += (arr[i][j] * vectorX[j])
+            }
+        }
+        if(p != P-1)
+        {
+            send computedVal to p+1
+        }
+        else if(p == P-1  && k == 9)
+        {
+            print computedVal array
+        }
+        else if(p == P-1)
+        {
+            send computedVal to 0
+        }
     }
 }
 ```
-
 *__Memory Consumed:__*
-Each node creates a local arry of size `N/P` to compute the value.
+Node 0 creates an array of size `N` to store the computed results and sends this array to the adjacent node. The next node computes values and stores them in the same array. Hence, the total memory consumption is `θ(N)`
 
 *__Communication per iteration:__*
-```
-```
+As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` communictions happening in every iteration.
+`Communication(N)` implies the communication overhead required to send an array of size `N`.
+
