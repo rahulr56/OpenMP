@@ -92,49 +92,53 @@ Since the communication is very costly in a disrtibuted computing environment, I
 ```
 matmulHorizontalPartitioning(A, vectorX, N, p, P)
 {
-    if(p == 0)
+    for (k = 0; k < 10; ++k)
     {
-        create an array  of size (N X 1)
-    }
-    begin = p*(N/P)
-    end = (p + 1) * (N/P)
-    Create and initialize an array val[begin - end] to 0s.
-    for (i = begin; i < end; ++i)
-    {
-        for (j = 0; j < N; ++j )
+        if(p==0)
         {
-            val[i] += (A[i][j] * vectorX[j])
+            create an array Y of size N and initialize array elements to 0.
         }
-    }
-    if (p == 0)
-    {
-        copy val array computed in p0 to Y.
-        for (i=1; i < P; ++i)
+        create an array computedVal of size (N) and initialize array elements to 0
+        begin = p * (N/P)
+        end = (p + 1) * (N/P)
+        for (i = begin; i < end; ++i)
         {
-            recv computedVal from node k
-            copy computedVal array to Y.
+            for (j = 0; j < N; ++j )
+            {
+                computedVal[i] += (A[i][j] * vectorX[j])
+            }
         }
-    }
-    else
-    {
-        send val to 0
+        if (p == 0)
+        {
+            copy computedVal array of Node 0 to Y.
+            for (r = 1; r < P; ++r)
+            {
+                recv computedVal from node r
+                Y += computedVal[r]
+            }
+            vectorX = Y
+        }
+        else
+        {
+            send computedVal to Node 0
+        }
     }
 }
 ```
 *__Memory Consumed:__*
-
-Every node other than Node 0 takes the memory size of `N/P` array size. So, their memory consumption is `θ(N/P)`. Whereas Node 0 creates and array Y of size N, Hence, its memory consumption is `θ(N)`. 
+Every node other than Node 0 creates an array of size `N`. Node 0 creates 2 arrays one to compute values and the other to store the end result. So, their total memory consumption is `θ(P*N+N) = *θ((P+1)*N)`.
 
 *__Communication per iteration:__*
-Each node computes the value of a 1d array of size `N/P`. Suppose that `X` is the communication overhead required to send an array of size `N/P`, the total communication overhead for this algorithm is 
+Each node computes the value of a 1d array of size `N`. The algorithm requires `θ(P)` communications per iteration to update the vector X and redo the whole matrix multiplication with updated vector X. The exact number of communications per iteration is :
 ```
-θ( P * Communication(X) )
+θ( P * Communication(N) )   
 ```
+`Communication(N)` implies the communication overhead required to send an array of size `N`.
+
 ### Algorithm for Vertical data partion (Chain)
 ```
 matmulVerticalPartitioning(arr, rows, cols, p, P):
 {
-
     for ( k = 0; k < 10; ++k)
     {
         begin = p * (N/P)
@@ -145,11 +149,16 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
         }
         else if (p == 0  && k == 0)
         {
-            create and initialize an array computedVal of size N to 0
-        }
-        else if(p == 0)
-        {
-            recv computedVal from P-1
+            if(k != 0)
+            {
+                recv computedVal from P-1
+                vectorX = computedVal
+                reinitilize all vallues in computedVal to 0s.
+            }
+            else 
+            {
+                create and initialize an array computedVal of size N to 0            
+            }
         }
         for (i = 0; i < N; ++i)
         {
@@ -178,10 +187,8 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
 Node 0 creates an array of size `N` to store the computed results and sends this array to the adjacent node. The next node computes values and stores them in the same array. Hence, the total memory consumption is `θ(N)`
 
 *__Communication per iteration:__*
-As this algorithm is CHAIN structured, there are no  or `θ(Communication(1) * P)` communictions happening in every iteration.
-
-*__Total Communications__*
-The total communication oevrhead is `10 * θ(Communication(1) * P)`
+As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` communictions happening in every iteration.
+`Communication(N)` implies the communication overhead required to send an array of size `N`.
 
 ### Algorithm for Block data partion
 ```
