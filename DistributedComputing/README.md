@@ -3,6 +3,12 @@
 ## Reduction
 ![Reduce](https://raw.github.com/rahulr56/OpenMP/master/DistributedComputing/Reduce.png)
 
+*__Best Algorithm__* 
+* Chain Network : Reduced-Chain gives the best performance for network load, minimal communication over Reduced-star and Reduced-tree. Hence, it is preferred for Chain network structure.
+
+* Clique Network : Reduced tree give the best performance with `θ(log(P)+1)` communications over `θ(P)` communications in reduced-clique. However, the node 0 is a bit more loaded ie., `θ(Communication(log(P)) + Computation(N/P))` than other nodes with `θ(Computation(N/P))`.
+
+
 ## Heat Equation
 ### Algorithm for Block data partition
 ```
