@@ -91,7 +91,7 @@ calculateHeatUsingRoundRobin(heatArr, N, p, P)
 ```
 
 ### Best Algorithm
-Since the communication is very costly in a disrtibuted computing environment, I would choose block data partitioning over Round Robin data partition. Suppose that the cost of communication is less than that of the wait time, I would prefer Round Robin data partitioning over block data partition.
+Since the communication is very costly in a distributed computing environment, I would choose block data partitioning over Round Robin data partition. Suppose that the cost of communication is less than that of the wait time, I would prefer Round Robin data partitioning over block data partition.
 
 
 ## Dense Matrix Multiplication
@@ -194,7 +194,7 @@ matmulVerticalPartitioning(arr, rows, cols, p, P):
 Node 0 creates an array of size `N` to store the computed results and sends this array to the adjacent node. The next node computes values and stores them in the same array. Hence, the total memory consumption is `θ(N)`
 
 *__Communication per iteration:__*
-As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` communictions happening in every iteration.
+As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` communications happening in every iteration.
 `Communication(N)` implies the communication overhead required to send an array of size `N`.
 
 ### Algorithm for Block data partion
@@ -248,6 +248,6 @@ matmulBlockPartitioning(A, vectorX, N, p, P)
 Node 0 creates an array of size `N` to store the computed results and sends this array to the adjacent node. The next node computes values and stores them in the same array. Hence, the total memory consumption is `θ(N)`
 
 *__Communication per iteration:__*
-As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` communictions happening in every iteration.
+As this algorithm is CHAIN structured, there are `θ(Communication(N) * P)` communications happening in every iteration.
 `Communication(N)` implies the communication overhead required to send an array of size `N`.
 
