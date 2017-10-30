@@ -1,7 +1,7 @@
 # Distributed Parallel Computing 
 
 ## Reduction
-![Reduce](https://raw.github.com/rahulr56/OpenMP/master/DistributedComputing/Reduce.png)
+![Reduce](https://github.com/rahulr56/OpenMP/blob/master/DistributedComputing/Reduce_Sol.png)
 
 *__Best Algorithm__* 
 * Chain Network : Reduced-Chain gives the best performance for network load, minimal communication over Reduced-star and Reduced-tree. Hence, it is preferred for Chain network structure.
