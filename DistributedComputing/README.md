@@ -1,6 +1,7 @@
 # Distributed Parallel Computing 
 
 ## Reduction
+![Reduce](https://raw.github.com/rahulr56/OpenMP/master/DistributedComputing/Reduce.png)
 
 ## Heat Equation
 ### Algorithm for Block data partition
