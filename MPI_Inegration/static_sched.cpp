@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <chrono>
-
 #include <mpi.h>
 
 #ifdef __cplusplus
