@@ -2,7 +2,6 @@
 #include <ratio>
 #include <chrono>
 #include <stdlib.h>
-
 #include <mpi.h>
 
 #ifdef __cplusplus
@@ -20,17 +19,23 @@ float f4(float x, int intensity);
 
 float (*funcPtr) (float,int);
 
-int main (int argc, char* argv[]) {
-
-  if (argc < 6) {
-    std::cerr<<"usage: mpirun "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
-    return -1;
-  }
+int main (int argc, char* argv[]) 
+{
+    if (argc < 6) 
+    {
+        std::cerr<<"usage: mpirun "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
+        return -1;
+    }
     int a = atoi(argv[2]);
     int n = atoi(argv[4]);
     int intensity = atoi(argv[5]);
+    int chunkSize = n / size;
+    int tag = MPI_ANY_TAG;
+    int rank, size;
+    int master = 0;
     float multiplier = (atoi(argv[3]) - a) / (float)n;
     double integralValue = 0.0;
+    double globalResult = 0.0;
     MPI_Comm comm;
 
     switch(atoi(argv[1]))
@@ -53,17 +58,10 @@ int main (int argc, char* argv[]) {
     }
 
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-    double globalResult = 0.0;
-    int rank, size;
-    int master = 0;
-
     MPI_Init (&argc, &argv);
 
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    int chunkSize = n / size;
-    int tag = MPI_ANY_TAG;
-
     if(rank == 0)
     {
         bool completed = false;
