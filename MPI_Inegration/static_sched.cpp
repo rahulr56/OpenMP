@@ -19,11 +19,10 @@ extern "C" {
 
 float (*funcPtr) (float,int);
 
-
 int main (int argc, char* argv[])
 {
-
-    if (argc < 6) {
+    if (argc < 6) 
+    {
         std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
         return -1;
     }
@@ -31,6 +30,10 @@ int main (int argc, char* argv[])
     int a = atoi(argv[2]);
     int n = atoi(argv[4]);
     int intensity = atoi(argv[5]);
+    int rank, size;
+    int chunkSize = n / size;
+    int tag = MPI_ANY_TAG;
+    double globalResult = 0.0;
     float multiplier = (atoi(argv[3]) - a) / (float)n;
     MPI_Comm comm;
 
@@ -52,16 +55,12 @@ int main (int argc, char* argv[])
             std::cerr<<"Invalid function number provided\n";
             exit(-1);
     }
-
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-    double globalResult = 0.0;
-    int rank, size;
+
     MPI_Init (&argc, &argv);
 
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    int chunkSize = n / size;
-    int tag = MPI_ANY_TAG;
 
     int arrStart = rank * chunkSize;
     int arrEnd = (rank + 1) * chunkSize;
