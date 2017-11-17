@@ -65,9 +65,7 @@ int main (int argc, char* argv[])
     int arrStart = rank * chunkSize;
     int arrEnd = (rank + 1) * chunkSize;
     if (rank == size - 1)
-    {
         arrEnd = n;
-    }
 
     double result = 0.0;
     for (int x = arrStart; x < arrEnd; ++x)
