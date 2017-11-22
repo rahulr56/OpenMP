@@ -37,7 +37,7 @@ do
 	done > ${RESULTDIR}/speedup_static_ni_${N}_${INTENSITY}
 
 
-	GNUPLOTSTRONG="${GNUPLOTSTRONG} set title 'strong scaling. n=${N} i=${INTENSITY}'; plot ${RESULTDIR}/speedup_static_ni_${N}_${INTENSITY} u 1:(\$2/\$3);"
+	GNUPLOTSTRONG="${GNUPLOTSTRONG} set title 'strong scaling. n=${N} i=${INTENSITY}'; plot '${RESULTDIR}/speedup_static_ni_${N}_${INTENSITY}' u 1:(\$2/\$3);"
     done
 done
 
@@ -65,7 +65,7 @@ do
 	done > ${RESULTDIR}/time_static_ni_${N}_${INTENSITY}
 
 
-	GNUPLOTWEAK="${GNUPLOTWEAK} set title 'weak scaling. n=${N} i=${INTENSITY}'; plot ${RESULTDIR}/time_static_ni_${N}_${INTENSITY} u 1:2;"
+	GNUPLOTWEAK="${GNUPLOTWEAK} set title 'weak scaling. n=${N} i=${INTENSITY}'; plot '${RESULTDIR}/time_static_ni_${N}_${INTENSITY}' u 1:2;"
     done
 done
 

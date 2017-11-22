@@ -37,7 +37,7 @@ do
 	done > ${RESULTDIR}/speedup_dynamic_ni_${N}_${INTENSITY}
 
 
-	GNUPLOTSTRONG="${GNUPLOTSTRONG} set title 'strong scaling. n=${N} i=${INTENSITY}'; plot ${RESULTDIR}/speedup_dynamic_ni_${N}_${INTENSITY} u 1:(\$2/\$3);"
+	GNUPLOTSTRONG="${GNUPLOTSTRONG} set title 'strong scaling. n=${N} i=${INTENSITY}'; plot '${RESULTDIR}/speedup_dynamic_ni_${N}_${INTENSITY}' u 1:(\$2/\$3);"
     done
 done
 
@@ -51,5 +51,7 @@ set key top left
 
 set xlabel 'proc'
 set ylabel 'speedup'
+
+${GNUPLOTSTRONG}
 
 EOF
