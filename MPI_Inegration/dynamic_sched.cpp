@@ -5,23 +5,22 @@
 #include <mpi.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C" 
+{
 #endif
-
-float f1(float x, int intensity);
-float f2(float x, int intensity);
-float f3(float x, int intensity);
-float f4(float x, int intensity);
-
+    float f1(float x, int intensity);
+    float f2(float x, int intensity);
+    float f3(float x, int intensity);
+    float f4(float x, int intensity);
 #ifdef __cplusplus
 }
 #endif
 
 float (*funcPtr) (float,int);
 
-int main (int argc, char* argv[]) 
+int main (int argc, char* argv[])
 {
-    if (argc < 6) 
+    if (argc < 6)
     {
         std::cerr<<"usage: mpirun "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
         return -1;
@@ -29,13 +28,8 @@ int main (int argc, char* argv[])
     int a = atoi(argv[2]);
     int n = atoi(argv[4]);
     int intensity = atoi(argv[5]);
-    int chunkSize = n / size;
-    int tag = MPI_ANY_TAG;
-    int rank, size;
-    int master = 0;
     float multiplier = (atoi(argv[3]) - a) / (float)n;
     double integralValue = 0.0;
-    double globalResult = 0.0;
     MPI_Comm comm;
 
     switch(atoi(argv[1]))
@@ -58,19 +52,27 @@ int main (int argc, char* argv[])
     }
 
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    double globalResult = 0.0;
+    int rank, size;
+    int master = 0;
+
     MPI_Init (&argc, &argv);
 
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int chunkSize = n / size ;
+    int tag = MPI_ANY_TAG;
+    // std::cout<<"n : "<<chunkSize<<"\nChunk Size : "<<chunkSize<<std::endl;
+
     if(rank == 0)
     {
         bool completed = false;
-        for ( int i = 0 ; i < chunkSize && (!completed); ++i)
+        for ( int i = 0 ; (i < chunkSize + 1) && (!completed); ++i)
         {
             int arrStart = i * chunkSize;
             for(int x = 1; x < size; ++x)
             {
-                int index = arrStart + x;
+                int index = arrStart + x - 1;
                 if ( index >= n)
                 {
                     completed = true;
@@ -114,6 +116,5 @@ int main (int argc, char* argv[])
         MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, 0, n+indexCalc, MPI_COMM_WORLD);
     }
     MPI_Finalize();
-
-  return 0;
+    return 0;
 }
