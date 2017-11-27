@@ -2,16 +2,28 @@
 #include <ratio>
 #include <chrono>
 #include <stdlib.h>
+#include <unistd.h>
 #include <mpi.h>
 
+
+#define ARR_START_SEND 100
+#define ARR_START_RECV 100
+#define ARR_END_SEND 101
+#define ARR_END_RECV 101
+#define RESULT_TAG 1002
+#define CHUNK_SIZE 2
+
+#define MASTER_MPI 0
+
 #ifdef __cplusplus
-extern "C" 
-{
+extern "C" {
 #endif
+
     float f1(float x, int intensity);
     float f2(float x, int intensity);
     float f3(float x, int intensity);
     float f4(float x, int intensity);
+
 #ifdef __cplusplus
 }
 #endif
@@ -51,70 +63,140 @@ int main (int argc, char* argv[])
             exit(-1);
     }
 
-    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
     double globalResult = 0.0;
     int rank, size;
     int master = 0;
+    int chunkSize = n / (size ) ;
+    int arrIndex = 0;
+    double receivedResult = 0.0;
+    int startIndex, endIndex;
+    MPI_Status status;
 
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
     MPI_Init (&argc, &argv);
-
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    int chunkSize = n / size ;
-    int tag = MPI_ANY_TAG;
-    // std::cout<<"n : "<<chunkSize<<"\nChunk Size : "<<chunkSize<<std::endl;
-
     if(rank == 0)
     {
-        bool completed = false;
-        for ( int i = 0 ; (i < chunkSize + 1) && (!completed); ++i)
+        for(int i=1; i < size; ++i)
         {
-            int arrStart = i * chunkSize;
-            for(int x = 1; x < size; ++x)
+            MPI_Send(&arrIndex,         // index being sent
+                    1,                  // 1byte
+                    MPI_INT,            // data type of var being sent
+                    i,                  // Destination
+                    ARR_START_SEND,     // tag
+                    MPI_COMM_WORLD);    // MPI Communicator
+
+            arrIndex += CHUNK_SIZE;
+            if(arrIndex >= n)
             {
-                int index = arrStart + x - 1;
-                if ( index >= n)
-                {
-                    completed = true;
-                    break;
-                }
-                std::cout<<"Master sending "<<index<<" to node : "<<x<<std::endl;
-                MPI_Send(&index, 1, MPI_INT, x, 100+x, MPI_COMM_WORLD);
+                arrIndex = n;
             }
-            for(int y = 1; y < size; ++y)
+
+            MPI_Send(&arrIndex,         // index being sent
+                    1,                  // 1byte
+                    MPI_INT,            // data type of var being sent
+                    i,                  // Destination
+                    ARR_END_SEND,       // tag
+                    MPI_COMM_WORLD);    // MPI Communicator
+        }
+        sleep(1);
+        for(int i=0; i < size;)
+        {
+            MPI_Recv(&receivedResult,       // Value in whuch the message is received
+                    1,                      // length of data being received
+                    MPI_DOUBLE_PRECISION,   // data type of var
+                    MPI_ANY_SOURCE,         // Any source
+                    RESULT_TAG,             // tag - 1002
+                    MPI_COMM_WORLD,         // MPI Communicator
+                    &status);               // stats of received message
+
+            integralValue += receivedResult;
+            if(arrIndex >= n)
             {
-                double res;
-                MPI_Status status;
-                int index = arrStart + y;
-                if ( index >= n)
+                MPI_Send(&n,                // index being sent
+                        1,                  // 1byte
+                        MPI_INT,            // data type of var being sent
+                        status.MPI_SOURCE,  // Destination
+                        ARR_START_SEND,     // tag
+                        MPI_COMM_WORLD);    // MPI Communicator
+                ++i;
+            }
+            else
+            {
+                MPI_Send(&arrIndex,         // index being sent
+                        1,                  // 1byte
+                        MPI_INT,            // data type of var being sent
+                        status.MPI_SOURCE,  // Destination
+                        ARR_START_SEND,     // tag
+                        MPI_COMM_WORLD);    // MPI Communicator
+                arrIndex += CHUNK_SIZE;
+                if(arrIndex >= n)
                 {
-                    completed = true;
-                    break;
+                    arrIndex = n;
                 }
-                MPI_Recv(&res, 1, MPI_DOUBLE_PRECISION, MPI_ANY_SOURCE, (n + arrStart + y), MPI_COMM_WORLD, &status);
-                std::cout<<"Master Receiving result from "<<y<<" value is : "<<res<<std::endl;
-                integralValue += res;
+                MPI_Send(&arrIndex,         // index being sent
+                        1,                  // 1byte
+                        MPI_INT,            // data type of var being sent
+                        status.MPI_SOURCE,  // Destination
+                        ARR_END_SEND,       // tag
+                        MPI_COMM_WORLD);    // MPI Communicator
             }
         }
-        std::cout<<"Integral Value is : "<<integralValue<<std::endl;
+        std::cout<<integralValue<<std::endl;
     }
     else
     {
-        MPI_Status status;
-        int indexCalc;
+        while(true)
+        {
+            // Receive array start index
+            MPI_Recv(&startIndex,           // Value in whuch the message is received
+                    1,                      // length of data being received
+                    MPI_INT,                // data type of var
+                    MASTER_MPI,             // receive from Master (0)
+                    ARR_START_RECV,         // tag
+                    MPI_COMM_WORLD,         // MPI Communicator
+                    &status);               // stats of received message
+            if(startIndex == n)
+            {
+                double dummyResult = 0.0;
+                MPI_Send(&dummyResult,          // computed result to send to master
+                        1,                      // length of data being sent
+                        MPI_DOUBLE_PRECISION,   // data type of var
+                        MASTER_MPI,             // Destination - Master (0)
+                        RESULT_TAG,             // tag - 1002
+                        MPI_COMM_WORLD);        // MPI Communicator
+                break;
+            }
 
-        // int MPI_Recv(void* buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status)
-        // MPI_Recv(&indexCalc, 1, MPI_INT, master, 100+rank, MPI_COMM_WORLD, &status);
-        MPI_Recv(&indexCalc, 1, MPI_INT, 0, 100+rank, MPI_COMM_WORLD, &status);
-        std::cout<<"Node "<<rank<<" Receiving index "<<indexCalc<<std::endl;
+            // Receive array end index
+            MPI_Recv(&endIndex,             // Value in whuch the message is received
+                    1,                      // length of data being received
+                    MPI_INT,                // data type of var
+                    MASTER_MPI,             // receive from Master (0)
+                    ARR_END_RECV,           // tag
+                    MPI_COMM_WORLD,         // MPI Communicator
+                    &status);               // stats of received message
 
-        double result = (double)funcPtr(a + (indexCalc+ 0.5) * multiplier, intensity) * multiplier;
+            double result = 0.0;
+            for (int x = startIndex; x < endIndex; ++x)
+            {
+                result += (double)funcPtr(a + (x + 0.5) * multiplier, intensity) * multiplier;
+            }
 
-        std::cout<<"Sending result : "<<result<<" to Master"<<std::endl;
-        // int MPI_Send(const void* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
-        //MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, master, 100+rank, MPI_COMM_WORLD);
-        MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, 0, n+indexCalc, MPI_COMM_WORLD);
+            // Send result to master
+            MPI_Send(&result,               // computed result to send to master
+                    1,                      // length of data being sent
+                    MPI_DOUBLE_PRECISION,   // data type of var
+                    MASTER_MPI,             // Destination - Master (0)
+                    RESULT_TAG,             // tag - 1002
+                    MPI_COMM_WORLD);        // MPI Communicator
+        }
     }
     MPI_Finalize();
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    if(rank == 0)
+        std::cerr<<elapsed_seconds.count()<<std::endl;
     return 0;
 }
