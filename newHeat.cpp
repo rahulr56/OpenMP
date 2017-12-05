@@ -15,15 +15,16 @@ void generateMatrix(int **arr, int n)
         for ( register int j=0; j< n ; ++j)
         {
             arr[i][j]=k++;
-            std::cout<<arr[i][j]<<"\t";
+//            std::cout<<arr[i][j]<<"\t";
         }
-        std::cout<<std::endl;
+//        std::cout<<std::endl;
     }
 }
 
 int computeHeatEq(int **h, int row, int col, int n)
 {
     int value =0;
+//    std::cout<<"row : "<<row<<"\t col :"<<col<<"\t n :"<<n<<std::endl;
     if(row == 0)
     {
         if(col==0)
@@ -39,7 +40,7 @@ int computeHeatEq(int **h, int row, int col, int n)
             value = (h[0][col-1]+ h[0][col+1] + h[1][col-1] + h[1][col] + h[1][col+1] + 4*h[0][col]) / 9;
         }
     }
-    else if ( row = n-1 )
+    else if ( row == n-1 )
     {
         if(col == 0)
         {
@@ -51,8 +52,16 @@ int computeHeatEq(int **h, int row, int col, int n)
         }
         else
         {
-            value = (h[row][col-1]+ h[row][col+1] + h[row+1][col-1] + h[row+1][col] + h[row+1][col+1] + 4*h[row][col]) / 9;
+            value = (h[row][col-1]+ h[row][col+1] + h[row-1][col-1] + h[row-1][col] + h[row-1][col+1] + 4*h[row][col]) / 9;
         }
+    }
+    else if ( col == 0)
+    {
+        value = (h[row-1][0] + h [row-1][col+1] + h[row][col+1] + h[row+1][col] + h[row+1][col+1] + h[row][col]*4)/9;
+    }
+    else if ( col == n-1)
+    {
+        value = (h[row-1][col] + h[row-1][col-1] + h[row][col-1]+h[row+1][col-1] + h[row+1][col]+h[row][col]*4)/9;
     }
     else
     {
@@ -92,7 +101,7 @@ int main (int argc, char** argv) {
             {
                 // assign assembled matrix to array
             }
-            std::cout<<"matrix Generated\n";
+            std::cout<<"matrix Generated\n rows :"<<rows<<std::endl;
             for (int dest = 1; dest < size; ++dest)
             {
                 MPI_Send(&offset, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
@@ -110,12 +119,12 @@ int main (int argc, char** argv) {
                 {
                     arrsize = (n - offset);
                     MPI_Send(&arrsize, 1, MPI_INT, dest, 2, MPI_COMM_WORLD);
-                    MPI_Send( &array[offset-1][0], (arrsize*n+n),
+                    MPI_Send( &array[offset-1][0], (arrsize+1)*n,
                             MPI_INT, dest,
                             MASTER_SEND_TAG, MPI_COMM_WORLD);
                     continue;
                 }
-                MPI_Send( &array[offset - 1][0], ((rows*n)+(2*n)),
+                MPI_Send( &array[offset-1][0], ((rows+2)*n),
                         MPI_INT, dest,
                         MASTER_SEND_TAG, MPI_COMM_WORLD);
                 offset += rows;
@@ -127,36 +136,42 @@ int main (int argc, char** argv) {
             int arrsize1;
             MPI_Recv(&offset, 1, MPI_INT, MASTER_NODE, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(&arrsize1, 1, MPI_INT, MASTER_NODE, 2, MPI_COMM_WORLD, &status);
-            std::cout<<"size : "<<arrsize1<<std::endl;
-            /*
-            MPI_Recv(&array[offset][0], (arrsize1+1)*n , MPI_INT, MASTER_NODE, MASTER_SEND_TAG, MPI_COMM_WORLD, &status);
-            for(int row =offset; row < arrsize1+offset;++row)
+//            std::cout<<"====size : "<<(arrsize1+1)*n<<std::endl;
+            MPI_Recv(&array[offset-1][0], (arrsize1+1)*n , MPI_INT, MASTER_NODE, MASTER_SEND_TAG, MPI_COMM_WORLD, &status);
+            for(int row =offset-1; row < arrsize1+offset;++row)
             {
                 for(int col = 0; col < n;++col)
                 {
-//                    array[row][col] =
-//                        std::cout<<computeHeatEq(array, row, col, n)<<std::endl;;
-                    std::cout<<array[row][col]<<"\t";
+                    array[row][col] = computeHeatEq(array, row, col, n);
                 }
-                std::cout<<std::endl;
             }
-            */
+        }
+        else if(rank == 1)
+        {
+            int offset;
+            MPI_Recv(&offset, 1, MPI_INT, MASTER_NODE, 1, MPI_COMM_WORLD, &status);
+            std::cout<<"RANK : "<<rank<<"\tOFFSET : "<<offset<<"\t+++++ SIze : "<<(rows+2)*n<<std::endl;
+            MPI_Recv(&array[offset][0], (rows + 1)*n, MPI_INT, MASTER_NODE, MASTER_SEND_TAG, MPI_COMM_WORLD, &status);
+            std::cout<<"Rank : "<<rank<<std::endl;
+            for(int row = 0; row < rows;++row)
+            {
+                for(int col = 0; col < n;++col)
+                {
+                    array[row][col] = computeHeatEq(array, row, col, n);
+                }
+            }
         }
         else
         {
             int offset;
             MPI_Recv(&offset, 1, MPI_INT, MASTER_NODE, 1, MPI_COMM_WORLD, &status);
-            MPI_Recv(&array[offset][0], (rows*n + 2*n), MPI_INT, MASTER_NODE, MASTER_SEND_TAG, MPI_COMM_WORLD, &status);
-            std::cout<<"Rank : "<<rank<<std::endl;
+            MPI_Recv(&array[offset-1][0], (rows + 2)*n, MPI_INT, MASTER_NODE, MASTER_SEND_TAG, MPI_COMM_WORLD, &status);
             for(int row =offset-1; row < rows+offset+1;++row)
             {
                 for(int col = 0; col < n;++col)
                 {
-//                    array[row][col] =
-//                        std::cout<<computeHeatEq(array, row, col, n)<<std::endl;;
-                    std::cout<<array[row][col]<<"\t";
+                    array[row][col] = computeHeatEq(array, row, col, n);
                 }
-                std::cout<<std::endl;
             }
         }
     }
